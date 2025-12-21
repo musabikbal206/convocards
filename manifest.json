@@ -1,7 +1,7 @@
 {
   "name": "SpeakUp Conversation Cards",
   "short_name": "SpeakUp",
-  "start_url": "./Convo.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#1e40af",
