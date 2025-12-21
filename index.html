@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" class="transition-colors duration-200">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Conversation Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --app-height: 100dvh;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            height: var(--app-height);
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .safe-pt { padding-top: env(safe-area-inset-top, 20px); }
+
+        .view-section {
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            will-change: opacity, transform;
+        }
+        
+        .hidden-view {
+            display: none !important;
+            opacity: 0;
+        }
+
+        /* Modal Transitions */
+        .modal {
+            transition: opacity 0.2s ease, visibility 0.2s;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal.open .modal-content {
+            transform: translateY(0);
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .speaking-animation {
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        @keyframes recording-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .recording-active {
+            animation: recording-pulse 1.5s infinite;
+            background-color: #fee2e2 !important; /* red-100 */
+            color: #ef4444 !important; /* red-500 */
+            border-color: #fca5a5 !important;
+        }
+        .dark .recording-active {
+            background-color: #450a0a !important; /* red-950 */
+            border-color: #7f1d1d !important;
+        }
+
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: scale(0.98) translateY(5px);
+        }
+
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #3b82f6;
+        }
+        
+        /* Floating Action Button Animation */
+        .fab-enter {
+            animation: fabEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes fabEnter {
+            from { transform: scale(0) rotate(-90deg); opacity: 0; }
+            to { transform: scale(1) rotate(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 flex flex-col overflow-hidden select-none transition-colors duration-300">
+
+    <!-- APP HEADER -->
+    <header class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 z-50 flex-none safe-pt relative transition-colors duration-300">
+        <div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+            
+            <div class="flex items-center gap-2" id="header-branding">
+                <span class="text-2xl">🗣️</span>
+                <h1 class="text-lg font-extrabold text-gray-800 dark:text-white tracking-tight">SpeakUp</h1>
+            </div>
+            
+            <div id="progress-container" class="hidden flex-1 mx-4">
+                <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden w-full">
+                    <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" id="theme-btn" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300 flex items-center justify-center w-8 h-8">
+                    <span id="theme-icon" class="text-xs">🌙</span>
+                </button>
+
+                <!-- Filter Button -->
+                <button onclick="toggleSettings()" id="filter-btn" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300 flex items-center gap-1 px-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-xs font-bold">Filters</span>
+                </button>
+
+                <!-- Exit Button -->
+                <button onclick="goHome()" id="home-btn" class="hidden relative z-50 p-2 bg-gray-100 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 rounded-full transition text-xs font-bold text-gray-600 dark:text-gray-300 px-3 py-1.5 flex items-center gap-1 cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400 border border-transparent hover:border-red-100 dark:hover:border-red-900/50">
+                    <span class="text-sm font-bold">✕</span>
+                    <span>Exit</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
+        <div class="modal-content bg-white dark:bg-gray-900 w-full max-w-md h-[85vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300">
+            <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                <div>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white">Smart Filters</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-semibold">Customize your "Smart Mix"</p>
+                </div>
+                <button onclick="toggleSettings()" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition">✕</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 space-y-8">
+                <!-- Levels Section -->
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Active Levels</h3>
+                        <button onclick="toggleAll('levels', true)" class="text-blue-600 dark:text-blue-400 text-xs font-bold">Select All</button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3" id="level-filters">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Topics Section -->
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Active Topics</h3>
+                        <button onclick="toggleAll('topics', true)" class="text-blue-600 dark:text-blue-400 text-xs font-bold">Select All</button>
+                    </div>
+                    <div class="space-y-3" id="topic-filters">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-gray-100 dark:border-gray-800 safe-pb bg-white dark:bg-gray-900">
+                <button onclick="applySettings()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON (SMART SHUFFLE) -->
+    <button onclick="startSmartShuffle()" id="fab-btn" class="fixed bottom-6 right-6 z-40 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-400/50 flex items-center justify-center fab-enter hover:scale-105 active:scale-95 transition-transform duration-200 border-2 border-white/20">
+        <span class="text-3xl filter drop-shadow-md">🎲</span>
+    </button>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 relative overflow-hidden w-full max-w-md mx-auto z-0">
+        
+        <!-- MENU VIEW -->
+        <div id="menu-view" class="view-section absolute inset-0 overflow-y-auto overflow-x-hidden p-4 pb-32 no-scrollbar">
+            
+            <!-- Level Selector Toggle -->
+            <div class="mb-4" id="level-toggle-container">
+                <div class="bg-gray-200 dark:bg-gray-800 p-1 rounded-xl w-full relative h-11 shadow-inner flex transition-colors duration-300">
+                    <div id="toggle-bg" class="absolute h-[calc(100%-8px)] bg-white dark:bg-gray-700 rounded-lg shadow-sm transition-all duration-300 ease-out top-1" style="width: 0; opacity: 0;"></div>
+                    <div id="level-buttons-container" class="flex w-full h-full z-10">
+                        <!-- Buttons injected by JS based on filters -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Single Hero Card with Visuals -->
+            <div id="hero-card" class="bg-gray-900 rounded-3xl h-48 mb-6 relative overflow-hidden transition-all duration-500 group shadow-lg">
+                <!-- Background Image Layer -->
+                <img id="hero-image" src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80" class="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-500" alt="Level Visual">
+                
+                <!-- Gradient Overlay -->
+                <div id="hero-overlay" class="absolute inset-0 bg-gradient-to-br from-blue-900/80 to-blue-600/80"></div>
+
+                <!-- Content -->
+                <div class="relative z-10 h-full flex flex-col justify-between p-6">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h2 class="text-2xl font-black text-white tracking-tight drop-shadow-md" id="hero-title">Let's Speak!</h2>
+                            <span id="level-badge-hero" class="bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[10px] font-bold border border-white/20">A1</span>
+                        </div>
+                        <p class="text-white/90 text-sm font-medium mt-1 drop-shadow-sm" id="hero-desc">Simple questions to get started.</p>
+                    </div>
+                    
+                    <button onclick="startLevelShuffle()" class="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white w-full py-3 rounded-xl font-bold active:scale-95 transition flex items-center justify-center gap-2 shadow-sm">
+                        <span class="text-lg">🔀</span> Shuffle <span id="btn-level-text" class="text-white font-extrabold">A1</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mb-3 px-1">
+                <h3 class="font-bold text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider">Browse Topics</h3>
+            </div>
+            
+            <div id="category-grid" class="grid grid-cols-2 gap-3 pb-8"></div>
+        </div>
+
+        <!-- CARD VIEW -->
+        <div id="card-view" class="hidden-view absolute inset-0 flex flex-col bg-gray-50 dark:bg-gray-950 z-10 transition-colors duration-300">
+            <div class="flex-none pt-2 px-6 flex justify-center z-10">
+                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm max-w-full transition-colors duration-300">
+                    <span id="current-icon" class="text-lg flex-shrink-0"></span>
+                    <span id="current-topic" class="font-bold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide truncate">Topic</span>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center p-4 w-full relative">
+                <div class="w-full bg-white dark:bg-gray-900 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-black/20 flex flex-col overflow-hidden relative border border-gray-100 dark:border-gray-800 h-full max-h-[70vh] transition-colors duration-300">
+                    
+                    <!-- Question Area -->
+                    <div class="flex-1 overflow-y-auto no-scrollbar p-6 flex flex-col items-center justify-center text-center">
+                        <div id="random-meta" class="hidden text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"></div>
+                        <div id="question-text" class="text-2xl font-extrabold text-gray-800 dark:text-gray-100 leading-tight pop-in px-1 select-text mb-6">Question?</div>
+                        
+                        <div class="flex items-center gap-2">
+                            <button onclick="speakCurrentQuestion()" id="speak-btn" class="w-12 h-12 rounded-full bg-gray-50 dark:bg-gray-800 text-blue-600 dark:text-blue-400 active:bg-blue-100 dark:active:bg-gray-700 active:scale-95 flex items-center justify-center transition-all duration-200 touch-manipulation shadow-sm border border-gray-100 dark:border-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                            </button>
+                            <span class="text-[10px] uppercase font-bold text-gray-300 dark:text-gray-600 tracking-wider">Listen</span>
+                        </div>
+                    </div>
+
+                    <!-- Answer Area -->
+                    <div class="flex-none p-4 bg-gray-50 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-800">
+                        <div class="relative w-full">
+                            <textarea id="answer-input" placeholder="Type or tap mic to record..." class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 pr-12 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all resize-none h-20 shadow-sm"></textarea>
+                            
+                            <!-- Mic Button -->
+                            <button onclick="toggleRecording()" id="mic-btn" class="absolute bottom-2 right-2 w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 flex items-center justify-center transition-all active:scale-95">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-none p-4 safe-pb bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] z-30 transition-colors duration-300">
+                <button onclick="prevQuestion()" id="prev-btn" class="flex-1 h-16 bg-gray-100 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-2xl font-bold transition disabled:opacity-30 disabled:active:bg-gray-50 dark:disabled:active:bg-gray-800 touch-manipulation flex flex-col items-center justify-center"><span class="text-2xl leading-none mb-1">←</span></button>
+                <button onclick="nextQuestion()" id="next-btn" class="flex-[3] h-16 bg-blue-600 active:bg-blue-700 active:scale-[0.98] text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-blue-900/30 transition touch-manipulation flex flex-col items-center justify-center relative overflow-hidden"><span class="text-lg tracking-wide" id="next-text">Next Question</span></button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATA ---
+        const levels = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
+        const categories = [
+            { id: 'personal', title: 'Personal Info', titles: { a2: 'Personal Info+', b2: 'Personal Development', c1: 'Identity & Self', c2: 'Identity & Meaning' }, icon: '🧍', color: 'bg-blue-500', questions: { a1: ["What is your name?", "How old are you?", "Where are you from?", "Where do you live now?", "Are you a student or do you work?"], a2: ["When is your birthday?", "Why are you learning English?", "Do you have a pet? Describe it.", "Who is your best friend?", "What is your dream job?"], b1: ["Could you describe your personality in three words?", "How has your life changed in the last 5 years?", "What are your main goals for the future?", "What is the most interesting thing about your background?", "Do you prefer living in a city or the countryside? Why?"], b2: ["If you had to describe your life to someone who has never met you, what would you say is the most important influence on who you are today?", "Looking back, what would you have done differently if you had known then what you know now?", "Do you think people who take risks are more successful than those who prefer stability? Why?", "If you could change one aspect of your personality, what would it be and why?", "Do you consider yourself an optimist or a pessimist? How does that affect your decisions?"], c1: ["To what extent do you think our environment shapes who we become, rather than our personal choices?", "If you hadn’t been exposed to different perspectives at an early age, how might your worldview be narrower today?", "What is it about certain experiences that makes them particularly formative?", "How do generational differences impact our self-perception?", "To what degree is your public persona different from your private self?"], c2: ["To what extent is identity something we construct deliberately, as opposed to something imposed on us by circumstance?", "Is the search for meaning an individual responsibility, or does society bear some obligation to provide it?", "Can personal authenticity exist in a world that increasingly rewards performance over substance?", "Does memory define identity, or do we constantly reinvent ourselves?", "Is the concept of a 'true self' a myth, or a psychological necessity?"] } },
+            { id: 'daily', title: 'Daily Life', titles: { a2: 'Routine & Past', b2: 'Work & Life Balance', c1: 'Habits & Pressures', c2: 'Modern Priorities' }, icon: '🏠', color: 'bg-orange-500', questions: { a1: ["What do you do in the morning?", "What time do you wake up?", "What do you eat for breakfast?", "Do you cook at home?", "What do you do in the evening?"], a2: ["What did you do yesterday?", "How do you get to work or school?", "Do you often stay up late?", "What is your favorite day of the week?", "Who cooks in your house?"], b1: ["If you could design your perfect daily routine, what would it look like?", "How do you usually handle stress during a busy week?", "Do you think you have a good work-life balance?", "What is the most productive part of your day?", "How do your weekends differ from your weekdays?"], b2: ["If people worked fewer hours, how do you think their daily lives would change?", "Compare a typical weekday with a weekend, focusing on how your habits differ.", "Is there something you do even when you know it isn’t good for you? Why do you continue doing it?", "How would your life be different if you didn't have to sleep?", "Do you think modern life is too fast-paced compared to the past?"], c1: ["Rarely do people reflect on how their routines affect their long-term wellbeing. Do you agree? Why or why not?", "How far would you say convenience has replaced quality in everyday life?", "Even though many people claim to value balance, they continue to overwork. Why do you think this contradiction exists?", "To what extent do our daily habits predict our future success?", "Is the glorification of 'busyness' a status symbol in modern society?"], c2: ["Has efficiency become a virtue in its own right, even when it undermines depth or quality?", "Do people genuinely lack time today, or have their expectations of productivity become unrealistic?", "Is comfort the ultimate achievement of modern life, or its greatest limitation?", "To what extent is 'boredom' necessary for creativity?", "Are we losing the ability to simply 'be' without constant stimulation?"] } },
+            { id: 'hobbies', title: 'Free Time', titles: { a2: 'Free Time+', b2: 'Interests & Culture', c1: 'Culture & Meaning', c2: 'Art & Interpretation' }, icon: '🎨', color: 'bg-purple-500', questions: { a1: ["What do you do in your free time?", "Do you like watching TV or YouTube?", "What music do you like?", "Do you play any sports?", "What do you do on weekends?"], a2: ["What was the last movie you saw?", "How often do you listen to music?", "Do you prefer indoor or outdoor sports?", "Did you have a hobby when you were a child?", "What do you usually do on Sunday?"], b1: ["What is a new hobby you would like to start in the future?", "Do you think having hobbies is important? Why?", "Tell me about a book or movie that influenced you recently.", "Do you prefer spending free time alone or with others?", "How do people in your country usually spend their free time?"], b2: ["How is the way people spend their free time today different from how people spent it in the past?", "If you could become very good at one skill that you don’t have now, which would you choose and why?", "Do you prefer activities that you can do alone or ones that involve other people? Explain your choice.", "Do you think video games can be considered a form of art?", "Is it better to have many interests or to focus on just one passion?"], c1: ["To what extent does the way people spend their free time reflect their values?", "Were cultural activities more meaningful in the past, or have they simply changed form?", "What role do shared cultural experiences play in creating a sense of belonging?", "How has the digitization of entertainment affected our attention spans?", "Can passive entertainment ever be as fulfilling as active creation?"], c2: ["Does art need to challenge in order to remain relevant, or is beauty justification enough?", "To what extent is cultural “decline” a real phenomenon rather than a recurring moral panic?", "Can culture be said to progress, or does it merely change shape?", "Is high culture inherently elitist, or is it accessible to anyone with the will to understand it?", "What is the relationship between art and morality?"] } },
+            { id: 'family', title: 'Family', titles: { a2: 'Family Details', b2: 'Relationships & Society', c1: 'Social Dynamics', c2: 'Power & Social Order' }, icon: '👨‍👩‍👧', color: 'bg-pink-500', questions: { a1: ["Do you have a big family or a small family?", "How many brothers or sisters do you have?", "Who do you live with?", "Do you spend time with your friends?", "What do you do with your friends?"], a2: ["How old are your parents?", "Do you look like your mother or your father?", "How often do you see your cousins?", "What does your family usually do on holidays?", "Who is the funniest person in your family?"], b1: ["Who has been the most influential person in your family?", "How often do you have family gatherings?", "Do you think friends can be considered family?", "What is your favorite memory from your childhood?", "How have family values changed in your country recently?"], b2: ["Do you think relationships would last longer if people communicated more openly? Why or why not?", "Compare online communication with face-to-face communication in terms of effectiveness.", "Is there a person who has influenced you more than anyone else? What makes them so important?", "Do you think it's possible to maintain a friendship for a lifetime?", "How do peer groups influence an individual's behavior?"], c1: ["Is it trust, communication, or shared values that matters most in maintaining strong relationships? Why?", "Had people been more emotionally literate, do you think many conflicts could have been avoided?", "In what ways do social expectations influence the way individuals present themselves?", "To what extent does our upbringing dictate our future relationships?", "Is unconditional love a realistic expectation in human relationships?"], c2: ["Is trust primarily a moral value, or a practical necessity for social stability?", "Are hierarchies an unavoidable feature of human organization, or a failure of imagination?", "When does social conformity cross the line into self-censorship?", "Can a society be truly prosperous without endless expansion?", "Is the desire for power the fundamental driver of human social interaction?"] } },
+            { id: 'food', title: 'Food & Health', titles: { a2: 'Food Choices', b2: 'Lifestyle & Health', c1: 'Health & Responsibility', c2: 'Ethics & Consequences' }, icon: '🍎', color: 'bg-red-500', questions: { a1: ["What is your favorite food?", "Do you like tea or coffee?", "What food do you not like?", "Do you eat fast food?", "Can you cook one meal?"], a2: ["What did you eat for dinner last night?", "Is there any food you are allergic to?", "Do you prefer sweet or savory food?", "How often do you eat at restaurants?", "What is a famous dish from your country?"], b1: ["What is a traditional dish from your country you recommend?", "Do you think people eat healthier today than in the past?", "Describe the best meal you have ever had.", "Do you prefer eating out or cooking at home? Why?", "Is there any food you refuse to eat?"], b2: ["If people paid more attention to their lifestyle, how might their health improve?", "What habits do you think are more harmful than people realize?", "Describe a habit that you would like to change, even though you know it will be difficult.", "Do you think governments should tax unhealthy food?", "How does your diet affect your mood and energy levels?"], c1: ["Despite widespread awareness, why do unhealthy habits remain so common?", "What tends to be underestimated is the long-term impact of small daily choices. Do you agree?", "Were people to take more responsibility for their health, how might healthcare systems change?", "To what extent is health a personal choice versus a socioeconomic outcome?", "Should insurance companies penalize people for lifestyle-related health issues?"], c2: ["Is ethical behavior still meaningful when it is motivated by social approval rather than conviction?", "To what extent should individuals be held accountable for systemic problems they did not create?", "Can moral progress occur without discomfort or sacrifice?", "Is there a moral obligation to be healthy for the sake of the collective?", "Do we prioritize the quantity of life over the quality of life in modern medicine?"] } },
+            { id: 'places', title: 'Travel', titles: { a2: 'Travel+', b2: 'City Life & Env.', c1: 'Society & Cities', c2: 'Society & Progress' }, icon: '🏙️', color: 'bg-teal-500', questions: { a1: ["What places do you like in your city?", "Do you like traveling?", "Have you been to another city or country?", "How do you go to school or work?", "Where do you want to go in the future?"], a2: ["Where did you go on your last holiday?", "Do you prefer the beach or the mountains?", "How do you usually travel (car, bus, plane)?", "What country do you want to visit next?", "Do you like traveling alone?"], b1: ["What is the biggest culture shock you have experienced?", "Do you prefer planning every detail of a trip or going with the flow?", "If you could live in another country for a year, where would it be?", "What are the benefits of traveling alone?", "How does tourism affect your city?"], b2: ["If you had grown up in a different city or country, how do you think your personality would be different?", "Compare living in a big city with living in a small town, focusing on quality of life.", "What would happen if governments didn’t invest in public transportation?", "Do you think tourism ruins authentic local culture?", "What makes a city 'livable' in your opinion?"], c1: ["If urban planning had prioritized sustainability earlier, how different might modern cities be today?", "Compare individual responsibility with governmental responsibility in addressing environmental issues.", "To what degree should economic growth be sacrificed for environmental protection?", "How does architecture influence human behavior in urban spaces?", "Is gentrification an inevitable consequence of urban development?"], c2: ["Has the concept of progress outlived its usefulness, or does it still offer a meaningful framework for the future?", "Should stability ever be valued more highly than change? Under what circumstances?", "Is inequality a problem to be solved, or a condition to be managed?", "Can a society be truly prosperous without endless expansion?", "Is the modern city the pinnacle of civilization or a cage of our own making?"] } },
+            { id: 'education', title: 'Education & Work', titles: { a2: 'Work/School+', c1: 'Achievement', c2: 'Knowledge & Truth' }, icon: '🎓', color: 'bg-indigo-500', questions: { a1: ["Do you go to school or work?", "Do you like your job?", "What is your favorite subject?", "Who is your favorite teacher?", "Is learning English hard?"], a2: ["What was your favorite subject in high school?", "Is your job stressful or easy?", "How many hours a day do you study or work?", "Did you learn English at school?", "What do you want to be in the future?"], b1: ["What was your favorite subject in school?", "Do you want to learn another language?", "Describe your dream job.", "Do you prefer working alone or in a team?", "Is going to university important?"], b2: ["Do you agree that practical experience is more valuable than theoretical knowledge? Why?", "If schools had focused more on life skills, do you think students would be better prepared for the future?", "Describe a job that you think will become more important in the future and explain why.", "Should education be free for everyone at all levels?", "How has the internet changed the way we learn?"], c1: ["To what extent does formal education prepare people for real-world challenges?", "What is it that employers value more today than they did in the past?", "Had remote work not become widespread, how might workplace culture have evolved differently?", "Is the traditional 9-to-5 workday becoming obsolete?", "Does the grading system in schools inhibit creativity?"], c2: ["Has access to information made people more informed, or merely more opinionated?", "Is expertise losing authority in contemporary society? If so, why?", "Can education ever be truly neutral?", "Is the pursuit of knowledge valuable in itself, or only as a means to an end?", "Does the specialization of knowledge alienate us from the bigger picture?"] } },
+            { id: 'tech', title: 'Technology', titles: { a2: 'Tech Habits', c1: 'Tech & Ethics', c2: 'Agency & Control' }, icon: '💻', color: 'bg-cyan-500', questions: { a1: ["Do you have a smartphone?", "Do you like video games?", "Do you use Instagram or TikTok?", "Is your computer new?", "Do you watch TV online?"], a2: ["How often do you check your phone?", "Do you prefer texting or calling?", "Do you use a computer for work?", "What is the best app on your phone?", "Do you like taking photos?"], b1: ["How many hours do you spend on your phone?", "Do you prefer texting or calling?", "What app do you use the most?", "Do you think children watch too much TV?", "Can you live without the internet?"], b2: ["If technology continues to develop at this speed, how might daily life change?", "Compare learning online with learning in a classroom, focusing on motivation and results.", "Is there a piece of technology that you couldn’t live without? Explain why.", "Do you think Artificial Intelligence is a danger to humanity?", "Has social media improved communication or made it worse?"], c1: ["Hardly had technology become accessible when concerns about privacy emerged. Do you think these concerns are justified?", "How far should technological progress be limited by ethical considerations?", "What are the potential consequences of relying too heavily on artificial intelligence?", "Is technology widening the gap between the rich and the poor?", "To what extent is digital anonymity beneficial to society?"], c2: ["Are we shaping technology, or is technology quietly reshaping us?", "At what point does convenience become dependency?", "Should there be limits on innovation, even when the consequences are uncertain?", "Is the singularity (AI surpassing human intelligence) an inevitable event?", "Has the digital age fundamentally altered the human experience of time?"] } },
+            { id: 'shopping', title: 'Shopping & Style', titles: { a2: 'Shopping+', b2: 'Money & Values', c1: 'Consumerism', c2: 'Materialism' }, icon: '🛍️', color: 'bg-rose-500', questions: { a1: ["Do you like shopping?", "What is your favorite shop?", "Do you buy clothes online?", "Is it expensive in your city?", "Do you have a credit card?"], a2: ["What is the last thing you bought?", "Do you prefer big malls or small shops?", "Is fashion important to you?", "Do you pay with cash or card?", "Do you like buying gifts for people?"], b1: ["Do you prefer large malls or small shops?", "Do you save money or spend it?", "What is the last thing you bought?", "Do you like fashion?", "Is money important for happiness?"], b2: ["If you had a lot of money, how would your spending habits change?", "Do you think brand name clothes are worth the extra money? Why?", "Compare shopping online vs in-store. Which is better?", "Is it better to rent things or own them? Explain.", "How does advertising influence what you buy?"], c1: ["To what extent does consumerism drive happiness in modern society?", "Had you not bought so many things in the past, would you be wealthier now?", "Is ethical consumption actually possible in a globalized economy?", "How far do material possessions reflect a person's status?", "What tends to happen when people prioritize wealth over relationships?"], c2: ["Is the pursuit of material wealth a distraction from the human condition?", "Can a capitalist society ever be truly sustainable?", "Does the commodification of culture destroy its authentic value?", "To what extent is the concept of 'ownership' becoming obsolete?", "Is luxury a valid artistic expression or merely a display of power?"] } },
+            { id: 'nature', title: 'Nature & Env.', titles: { a2: 'Nature+', b2: 'Environment', c1: 'Sustainability', c2: 'Nature & Ethics' }, icon: '🍃', color: 'bg-emerald-500', questions: { a1: ["What is the weather like today?", "Do you like the beach?", "Is it cold in winter?", "Do you like animals?", "Do you have a pet?"], a2: ["What is your favorite season? Why?", "Does it rain often in your city?", "Are you afraid of any animals?", "Do you like gardening?", "Is there a park near your house?"], b1: ["What is your favorite season and why?", "Do you worry about the environment?", "What do you do to help the planet?", "Have you ever visited a national park?", "Do you prefer the mountains or the sea?"], b2: ["If we don't protect the environment, what will happen in the future?", "Do you think individuals can make a difference, or is it up to governments?", "Compare the climate in your country now to how it was in the past.", "Describe a natural place that is special to you.", "If you could live completely off-grid in nature, would you?"], c1: ["To what degree should economic growth be sacrificed for environmental protection?", "If humans hadn't interfered with nature, how might the world look today?", "It is often said that nature heals. Do you agree?", "How far should we go to preserve endangered species?", "What are the ethical implications of zoos in the modern world?"], c2: ["Is humanity's separation from nature the root cause of modern psychological distress?", "Do we have a moral obligation to future generations to leave the planet as we found it?", "Can technology solve the climate crisis, or must we fundamentally change our behavior?", "Is the anthropocentric view of the universe our fatal flaw?", "Should nature be granted legal personhood?"] } }
+        ];
+
+        // --- FILTER STATE ---
+        const STORAGE_KEY = 'speakup_state_v3';
+        let activeFilters = {
+            levels: levels.reduce((acc, lvl) => ({...acc, [lvl]: true}), {}),
+            topics: categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
+        };
+
+        let currentLevel = 'a1';
+        let currentQueue = [];
+        let currentIndex = 0;
+        let currentTheme = null;
+        let isDarkMode = false;
+        let savedAnswers = {}; // Map of "Question Text" -> "Answer String"
+        let synth = window.speechSynthesis;
+        
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+        }
+
+        const els = {
+            menuView: document.getElementById('menu-view'),
+            cardView: document.getElementById('card-view'),
+            homeBtn: document.getElementById('home-btn'),
+            fabBtn: document.getElementById('fab-btn'),
+            filterBtn: document.getElementById('filter-btn'),
+            themeBtn: document.getElementById('theme-btn'),
+            themeIcon: document.getElementById('theme-icon'),
+            grid: document.getElementById('category-grid'),
+            headerBranding: document.getElementById('header-branding'),
+            progressContainer: document.getElementById('progress-container'),
+            progressBar: document.getElementById('progress-bar'),
+            questionText: document.getElementById('question-text'),
+            randomMeta: document.getElementById('random-meta'),
+            prevBtn: document.getElementById('prev-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            nextText: document.getElementById('next-text'),
+            topicLabel: document.getElementById('current-topic'),
+            topicIcon: document.getElementById('current-icon'),
+            speakBtn: document.getElementById('speak-btn'),
+            settingsModal: document.getElementById('settings-modal'),
+            toggleBg: document.getElementById('toggle-bg'),
+            levelBtnsContainer: document.getElementById('level-buttons-container'),
+            levelToggleContainer: document.getElementById('level-toggle-container'),
+            heroTitle: document.getElementById('hero-title'),
+            heroDesc: document.getElementById('hero-desc'),
+            heroImage: document.getElementById('hero-image'),
+            heroOverlay: document.getElementById('hero-overlay'),
+            btnLevelText: document.getElementById('btn-level-text'),
+            heroCard: document.getElementById('hero-card'),
+            levelBadge: document.getElementById('level-badge-hero'),
+            answerInput: document.getElementById('answer-input'),
+            micBtn: document.getElementById('mic-btn')
+        };
+
+        function init() {
+            loadState();
+            applyTheme(); 
+            renderFilterUI();
+            renderLevelToggle();
+            updateThemeForLevel(currentLevel);
+            renderMenu();
+            
+            const setAppHeight = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+            window.addEventListener('resize', setAppHeight);
+            setAppHeight();
+
+            // Answer saving listener
+            els.answerInput.addEventListener('input', (e) => {
+                const qText = els.questionText.textContent;
+                saveAnswer(qText, e.target.value);
+            });
+            
+            // Setup recognition handlers
+            if (recognition) {
+                recognition.onstart = () => {
+                    isRecording = true;
+                    els.micBtn.classList.add('recording-active');
+                    els.answerInput.placeholder = "Listening...";
+                };
+                
+                recognition.onend = () => {
+                    isRecording = false;
+                    els.micBtn.classList.remove('recording-active');
+                    els.answerInput.placeholder = "Type or tap mic to record...";
+                };
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const currentVal = els.answerInput.value;
+                    // Append if there's text, otherwise set
+                    const newVal = currentVal ? `${currentVal} ${transcript}` : transcript;
+                    els.answerInput.value = newVal;
+                    saveAnswer(els.questionText.textContent, newVal);
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error("Speech Recog Error", event.error);
+                    isRecording = false;
+                    els.micBtn.classList.remove('recording-active');
+                    alert("Could not record audio. Please check permissions.");
+                };
+            } else {
+                els.micBtn.style.display = 'none'; // Hide if not supported
+            }
+        }
+
+        // --- ANSWER SAVING ---
+        function saveAnswer(questionText, answerText) {
+            savedAnswers[questionText] = answerText;
+            saveState();
+        }
+
+        // --- STORAGE LOGIC ---
+        function saveState() {
+            try {
+                const state = {
+                    filters: activeFilters,
+                    level: currentLevel,
+                    darkMode: isDarkMode,
+                    answers: savedAnswers
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error("Failed to save state:", e);
+            }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    if (data.filters) {
+                        if (data.filters.levels) activeFilters.levels = { ...activeFilters.levels, ...data.filters.levels };
+                        if (data.filters.topics) activeFilters.topics = { ...activeFilters.topics, ...data.filters.topics };
+                    }
+                    if (data.level && levels.includes(data.level)) currentLevel = data.level;
+                    if (typeof data.darkMode !== 'undefined') isDarkMode = data.darkMode;
+                    if (data.answers) savedAnswers = data.answers;
+                    else savedAnswers = {};
+                    
+                    if (typeof isDarkMode === 'undefined') {
+                        isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    }
+                } else {
+                    isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                }
+            } catch (e) {
+                console.error("Failed to load state:", e);
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
+
+        // --- SPEECH RECOG ---
+        function toggleRecording() {
+            if (!recognition) return;
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // --- THEME LOGIC ---
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            applyTheme();
+            saveState();
+        }
+
+        function applyTheme() {
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                els.themeIcon.textContent = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                els.themeIcon.textContent = '🌙';
+            }
+        }
+
+        // --- SETTINGS LOGIC ---
+        function toggleSettings() {
+            const isOpen = els.settingsModal.classList.contains('open');
+            if (isOpen) els.settingsModal.classList.remove('open');
+            else els.settingsModal.classList.add('open');
+        }
+
+        function renderFilterUI() {
+            const levelContainer = document.getElementById('level-filters');
+            levelContainer.innerHTML = levels.map(lvl => `
+                <div class="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-xl transition-colors duration-300">
+                    <span class="font-bold text-gray-700 dark:text-gray-200 uppercase">${lvl}</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="updateFilter('levels', '${lvl}', this.checked)" class="sr-only peer toggle-checkbox" ${activeFilters.levels[lvl] ? 'checked' : ''}>
+                        <div class="w-9 h-5 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                    </label>
+                </div>
+            `).join('');
+
+            const topicContainer = document.getElementById('topic-filters');
+            topicContainer.innerHTML = categories.map(cat => `
+                <div class="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">${cat.icon}</span>
+                        <span class="font-bold text-gray-700 dark:text-gray-200 text-sm">${cat.title}</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="updateFilter('topics', '${cat.id}', this.checked)" class="sr-only peer toggle-checkbox" ${activeFilters.topics[cat.id] ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function updateFilter(type, key, isChecked) {
+            activeFilters[type][key] = isChecked;
+            saveState(); // Save immediately on change
+        }
+
+        function toggleAll(type, state) {
+            const keys = type === 'levels' ? levels : categories.map(c => c.id);
+            keys.forEach(k => activeFilters[type][k] = state);
+            renderFilterUI();
+            saveState();
+        }
+
+        function applySettings() {
+            toggleSettings();
+            renderLevelToggle();
+            validateCurrentLevel();
+            renderMenu();
+        }
+
+        function validateCurrentLevel() {
+            if (!activeFilters.levels[currentLevel]) {
+                const firstActive = levels.find(l => activeFilters.levels[l]);
+                if (firstActive) {
+                    setLevel(firstActive);
+                }
+            } else {
+                setLevel(currentLevel); 
+            }
+        }
+
+        // --- LEVEL SELECTOR ---
+        function renderLevelToggle() {
+            const container = document.getElementById('level-buttons-container');
+            container.innerHTML = '';
+            
+            const activeLvlKeys = levels.filter(l => activeFilters.levels[l]);
+            
+            if (activeLvlKeys.length === 0) {
+                 container.innerHTML = '<div class="w-full text-center text-xs text-gray-400 dark:text-gray-500 py-3">No levels active</div>';
+                 els.toggleBg.style.opacity = '0';
+                 return;
+            }
+
+            activeLvlKeys.forEach((lvl) => {
+                const btn = document.createElement('button');
+                btn.className = `relative z-10 flex-1 text-[10px] font-extrabold text-gray-500 dark:text-gray-400 transition-colors duration-300 text-center leading-none flex items-center justify-center py-2`;
+                btn.id = `btn-${lvl}`;
+                btn.textContent = lvl.toUpperCase();
+                btn.onclick = () => setLevel(lvl);
+                container.appendChild(btn);
+            });
+            
+            els.activeLevelKeys = activeLvlKeys;
+            
+            // Re-apply visual selection state for the toggle after render
+            if(activeFilters.levels[currentLevel]) {
+                 updateToggleVisuals(currentLevel);
+            }
+        }
+
+        window.setLevel = function(level) {
+            if (!activeFilters.levels[level]) return;
+            currentLevel = level;
+            saveState(); // Save the new level
+            
+            updateToggleVisuals(level);
+            updateThemeForLevel(level);
+            renderMenu();
+        }
+        
+        function updateToggleVisuals(level) {
+             const activeKeys = els.activeLevelKeys || levels;
+             const idx = activeKeys.indexOf(level);
+             
+             // Reset all buttons text color
+             activeKeys.forEach(l => {
+                const b = document.getElementById(`btn-${l}`);
+                if(b) b.className = "relative z-10 flex-1 text-[10px] font-extrabold text-gray-500 dark:text-gray-400 transition-colors duration-300 text-center leading-none flex items-center justify-center py-2";
+            });
+            
+            // Set active button color
+            const activeBtn = document.getElementById(`btn-${level}`);
+            let themeColor = 'text-gray-800'; // Default dark color
+            
+            if (level === 'a1') themeColor = 'text-blue-600 dark:text-blue-400';
+            else if (level === 'a2') themeColor = 'text-sky-600 dark:text-sky-400';
+            else if (level === 'b1') themeColor = 'text-purple-600 dark:text-purple-400';
+            else if (level === 'b2') themeColor = 'text-emerald-600 dark:text-emerald-400';
+            else if (level === 'c1') themeColor = 'text-rose-600 dark:text-rose-400';
+            else if (level === 'c2') themeColor = 'text-slate-900 dark:text-slate-200';
+
+            if(activeBtn) activeBtn.className = `relative z-10 flex-1 text-[10px] font-extrabold ${themeColor} transition-colors duration-300 text-center leading-none flex items-center justify-center py-2`;
+
+            if (activeKeys.length > 0 && idx !== -1) {
+                const width = 100 / activeKeys.length;
+                els.toggleBg.style.width = `${width}%`;
+                els.toggleBg.style.left = `${idx * width}%`;
+                els.toggleBg.style.opacity = '1';
+            }
+        }
+
+        // --- THEME & VISUALS ---
+        function updateThemeForLevel(level) {
+             if (level === 'a1') {
+                updateThemeUI("Let's Speak!", "Simple questions to get started.", "A1", "text-blue-600", 
+                "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80", 
+                "bg-gradient-to-br from-blue-900/80 to-blue-600/80");
+            } else if (level === 'a2') {
+                updateThemeUI("Keep Going!", "Past tense and detailed ideas.", "A2", "text-sky-600",
+                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
+                "bg-gradient-to-br from-sky-900/80 to-sky-600/80");
+            } else if (level === 'b1') {
+                updateThemeUI("Level Up!", "Deeper questions for longer answers.", "B1", "text-purple-600",
+                "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=800&q=80",
+                "bg-gradient-to-br from-purple-900/80 to-purple-600/80");
+            } else if (level === 'b2') {
+                updateThemeUI("Advanced", "Complex topics & conditionals.", "B2", "text-emerald-600",
+                "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
+                "bg-gradient-to-br from-emerald-900/80 to-emerald-600/80");
+            } else if (level === 'c1') {
+                updateThemeUI("Mastery", "Abstract & hypothetical concepts.", "C1", "text-rose-600",
+                "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+                "bg-gradient-to-br from-rose-900/80 to-rose-600/80");
+            } else if (level === 'c2') {
+                updateThemeUI("Proficiency", "Philosophy, society & meta.", "C2", "text-slate-900",
+                "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
+                "bg-gradient-to-br from-slate-900/90 to-slate-800/90");
+            }
+        }
+
+        function updateThemeUI(title, desc, badgeText, textColor, imageUrl, overlayClass) {
+            els.heroTitle.textContent = title;
+            els.heroDesc.textContent = desc;
+            els.btnLevelText.textContent = badgeText; 
+            els.btnLevelText.className = "text-white font-extrabold"; 
+            els.levelBadge.textContent = badgeText;
+            
+            // Image swap with fade
+            els.heroImage.style.opacity = '0';
+            setTimeout(() => {
+                els.heroImage.src = imageUrl;
+                els.heroImage.onload = () => { els.heroImage.style.opacity = '0.6'; };
+            }, 200);
+
+            els.heroOverlay.className = `absolute inset-0 ${overlayClass}`;
+        }
+
+        function renderMenu() {
+            els.grid.innerHTML = '';
+            categories.forEach(cat => {
+                if (!cat.questions[currentLevel] || cat.questions[currentLevel].length === 0) return;
+                if (!activeFilters.topics[cat.id]) return;
+
+                const btn = document.createElement('div');
+                const count = cat.questions[currentLevel].length;
+                const displayTitle = (cat.titles && cat.titles[currentLevel]) ? cat.titles[currentLevel] : cat.title;
+
+                btn.className = `bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 active:scale-95 transition cursor-pointer flex flex-col justify-between shadow-sm dark:shadow-black/20 h-24 hover:shadow-md transition-colors duration-200`;
+                btn.onclick = () => startCategory(cat.id);
+                btn.innerHTML = `
+                    <div class="flex justify-between items-start">
+                         <div class="w-8 h-8 ${cat.color} bg-opacity-10 dark:bg-opacity-20 rounded-full flex items-center justify-center text-lg">${cat.icon}</div>
+                        <span class="text-[10px] font-bold text-gray-300 dark:text-gray-600">${count}</span>
+                    </div>
+                    <span class="font-bold text-gray-700 dark:text-gray-200 text-sm leading-tight line-clamp-2">${displayTitle}</span>
+                `;
+                els.grid.appendChild(btn);
+            });
+            
+            if (els.grid.children.length === 0) {
+                els.grid.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-400 dark:text-gray-500 text-sm">No topics match your filters.<br>Check settings!</div>`;
+            }
+        }
+
+        function startCategory(id) {
+            const cat = categories.find(c => c.id === id);
+            currentQueue = [...cat.questions[currentLevel]];
+            currentTheme = { ...cat };
+            if (cat.titles && cat.titles[currentLevel]) currentTheme.title = cat.titles[currentLevel];
+            currentIndex = 0;
+            openCardView(false);
+        }
+
+        function startLevelShuffle() {
+             let pool = [];
+             categories.forEach(cat => {
+                 if (!activeFilters.topics[cat.id]) return;
+                 if (cat.questions[currentLevel]) pool = pool.concat(cat.questions[currentLevel]);
+             });
+
+             if (pool.length === 0) { alert("No questions found for this level!"); return; }
+
+             currentQueue = pool.sort(() => 0.5 - Math.random());
+             
+             let color;
+             if (currentLevel === 'a1') color = 'bg-blue-600';
+             else if (currentLevel === 'a2') color = 'bg-sky-500';
+             else if (currentLevel === 'b1') color = 'bg-purple-600';
+             else if (currentLevel === 'b2') color = 'bg-emerald-600';
+             else if (currentLevel === 'c1') color = 'bg-rose-600';
+             else color = 'bg-slate-800';
+
+             currentTheme = { 
+                title: `Shuffle (${currentLevel.toUpperCase()})`, 
+                icon: '🎲', 
+                color: color,
+                isRandom: false
+             };
+             currentIndex = 0;
+             openCardView(false);
+        }
+
+        function startSmartShuffle() {
+            let pool = [];
+            categories.forEach(cat => {
+                if (!activeFilters.topics[cat.id]) return; 
+                Object.keys(cat.questions).forEach(lvl => {
+                     if (!activeFilters.levels[lvl]) return;
+                     const questions = cat.questions[lvl].map(q => ({
+                         text: q,
+                         level: lvl,
+                         topic: (cat.titles && cat.titles[lvl]) ? cat.titles[lvl] : cat.title,
+                         catId: cat.id
+                     }));
+                     pool = pool.concat(questions);
+                });
+            });
+
+            if (pool.length === 0) {
+                alert("No questions available! Please check your filters.");
+                return;
+            }
+
+            currentQueue = pool.sort(() => 0.5 - Math.random());
+            
+            currentTheme = { 
+                title: `Smart Mix`, 
+                icon: '✨', 
+                color: 'bg-indigo-600',
+                isRandom: true
+            };
+            currentIndex = 0;
+            openCardView(true);
+        }
+
+        function openCardView(isRandom) {
+            els.menuView.classList.add('hidden-view');
+            els.cardView.classList.remove('hidden-view');
+            els.headerBranding.classList.add('hidden');
+            els.progressContainer.classList.remove('hidden');
+            els.filterBtn.parentElement.classList.add('hidden');
+            els.homeBtn.parentElement.classList.remove('hidden');
+            els.filterBtn.classList.add('hidden');
+            els.themeBtn.classList.add('hidden'); // Hide Theme button in card view
+            els.homeBtn.classList.remove('hidden');
+            els.fabBtn.classList.add('hidden'); // Hide FAB in card view
+            
+            els.topicIcon.textContent = currentTheme.icon;
+            els.topicLabel.textContent = currentTheme.title;
+            
+            const btnColor = currentTheme.color || 'bg-blue-600';
+            els.nextBtn.className = `flex-[3] h-16 ${btnColor} active:brightness-90 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-blue-900/30 transition touch-manipulation flex flex-col items-center justify-center relative overflow-hidden`;
+            els.progressBar.className = `h-full ${btnColor} transition-all duration-300 w-0`;
+            
+            if (isRandom) els.randomMeta.classList.remove('hidden');
+            else els.randomMeta.classList.add('hidden');
+
+            updateCard();
+        }
+
+        window.goHome = function() {
+            if (synth) synth.cancel();
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+            els.cardView.classList.add('hidden-view');
+            els.menuView.classList.remove('hidden-view');
+            els.headerBranding.classList.remove('hidden');
+            els.progressContainer.classList.add('hidden');
+            els.filterBtn.classList.remove('hidden');
+            els.themeBtn.classList.remove('hidden');
+            els.filterBtn.parentElement.classList.remove('hidden');
+            els.homeBtn.classList.add('hidden');
+            els.fabBtn.classList.remove('hidden'); // Show FAB
+        }
+
+        function updateCard() {
+            if (recognition && isRecording) {
+                recognition.stop(); // Stop recording when changing cards
+            }
+
+            els.questionText.classList.remove('pop-in');
+            void els.questionText.offsetWidth; 
+            els.questionText.classList.add('pop-in');
+            
+            const item = currentQueue[currentIndex];
+            const text = typeof item === 'string' ? item : item.text;
+            els.questionText.textContent = text;
+            
+            // Restore answer
+            const saved = savedAnswers[text] || "";
+            els.answerInput.value = saved;
+            
+            if (typeof item === 'object') {
+                 els.randomMeta.textContent = `${item.level.toUpperCase()} • ${item.topic}`;
+            }
+            
+            if (text.length > 130) els.questionText.className = "text-lg font-bold text-gray-800 dark:text-gray-100 leading-snug pop-in px-1 select-text mb-6";
+            else if (text.length > 80) els.questionText.className = "text-xl font-extrabold text-gray-800 dark:text-gray-100 leading-tight pop-in px-1 select-text mb-6";
+            else els.questionText.className = "text-2xl md:text-3xl font-extrabold text-gray-800 dark:text-gray-100 leading-tight pop-in px-1 select-text mb-6";
+
+            const percent = ((currentIndex + 1) / currentQueue.length) * 100;
+            els.progressBar.style.width = `${percent}%`;
+            els.prevBtn.disabled = currentIndex === 0;
+            if (currentIndex === currentQueue.length - 1) els.nextText.textContent = "Start Over";
+            else els.nextText.textContent = "Next";
+        }
+
+        window.nextQuestion = function() {
+            if (currentIndex < currentQueue.length - 1) { currentIndex++; updateCard(); }
+            else { currentIndex = 0; updateCard(); }
+        }
+
+        window.prevQuestion = function() {
+            if (currentIndex > 0) { currentIndex--; updateCard(); }
+        }
+
+        window.speakCurrentQuestion = function() {
+            const item = currentQueue[currentIndex];
+            const text = typeof item === 'string' ? item : item.text;
+            if (!synth) return;
+            try {
+                if (synth.speaking) synth.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.onstart = () => { els.speakBtn.classList.add('speaking-animation', 'bg-blue-100', 'dark:bg-blue-900/40', 'border-blue-200', 'dark:border-blue-800'); };
+                utterance.onend = () => { els.speakBtn.classList.remove('speaking-animation', 'bg-blue-100', 'dark:bg-blue-900/40', 'border-blue-200', 'dark:border-blue-800'); };
+                utterance.onerror = (e) => { els.speakBtn.classList.remove('speaking-animation'); };
+                synth.speak(utterance);
+            } catch (e) { console.error("TTS Failed", e); }
+        }
+        init();
+    </script>
+</body>
+</html>
