@@ -138,7 +138,7 @@
             
             <div class="flex items-center gap-2" id="header-branding">
                 <span class="text-2xl">🗣️</span>
-                <h1 class="text-lg font-extrabold text-gray-800 dark:text-white tracking-tight hidden sm:block">SpeakUp</h1>
+                <h1 class="text-lg font-extrabold text-gray-800 dark:text-white tracking-tight block">SpeakUp</h1>
             </div>
             
             <div id="progress-container" class="hidden flex-1 mx-4">
@@ -149,8 +149,8 @@
 
             <div class="flex items-center gap-2">
                 <!-- Language Toggle -->
-                <button onclick="toggleLanguage()" id="lang-btn" class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs font-black text-gray-600 dark:text-gray-300 h-8 flex items-center justify-center border border-transparent hover:border-gray-300 dark:hover:border-gray-600">
-                    EN
+                <button onclick="toggleLanguage()" id="lang-btn" class="w-9 h-9 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center border border-transparent hover:border-gray-300 dark:hover:border-gray-600 text-lg leading-none pt-0.5" title="Switch Language">
+                    🇺🇸
                 </button>
 
                 <!-- Theme Toggle -->
@@ -628,8 +628,9 @@
         }
 
         function updateInterfaceText() {
-            // Update lang button
-            els.langBtn.textContent = currentLang.toUpperCase();
+            // Update lang button with Flags
+            // Use US flag for English (as it maps to en-US speech) and TR flag for Turkish
+            els.langBtn.textContent = currentLang === 'en' ? '🇺🇸' : '🇹🇷';
             
             // Update all elements with data-key attribute
             document.querySelectorAll('[data-key]').forEach(el => {
