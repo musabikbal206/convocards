@@ -138,7 +138,7 @@
             
             <div class="flex items-center gap-2" id="header-branding">
                 <span class="text-2xl">🗣️</span>
-                <h1 class="text-lg font-extrabold text-gray-800 dark:text-white tracking-tight">SpeakUp</h1>
+                <h1 class="text-lg font-extrabold text-gray-800 dark:text-white tracking-tight hidden sm:block">SpeakUp</h1>
             </div>
             
             <div id="progress-container" class="hidden flex-1 mx-4">
@@ -148,6 +148,11 @@
             </div>
 
             <div class="flex items-center gap-2">
+                <!-- Language Toggle -->
+                <button onclick="toggleLanguage()" id="lang-btn" class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs font-black text-gray-600 dark:text-gray-300 h-8 flex items-center justify-center border border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                    EN
+                </button>
+
                 <!-- Theme Toggle -->
                 <button onclick="toggleTheme()" id="theme-btn" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300 flex items-center justify-center w-8 h-8">
                     <span id="theme-icon" class="text-xs">🌙</span>
@@ -158,13 +163,13 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
                     </svg>
-                    <span class="text-xs font-bold">Filters</span>
+                    <span class="text-xs font-bold" data-key="filters">Filters</span>
                 </button>
 
                 <!-- Exit Button -->
                 <button onclick="goHome()" id="home-btn" class="hidden relative z-50 p-2 bg-gray-100 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 rounded-full transition text-xs font-bold text-gray-600 dark:text-gray-300 px-3 py-1.5 flex items-center gap-1 cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400 border border-transparent hover:border-red-100 dark:hover:border-red-900/50">
                     <span class="text-sm font-bold">✕</span>
-                    <span>Exit</span>
+                    <span data-key="exit">Exit</span>
                 </button>
             </div>
         </div>
@@ -175,8 +180,8 @@
         <div class="modal-content bg-white dark:bg-gray-900 w-full max-w-md h-[85vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300">
             <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
                 <div>
-                    <h2 class="text-xl font-black text-gray-800 dark:text-white">Smart Filters</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-semibold">Customize your "Smart Mix"</p>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white" data-key="smart_filters">Smart Filters</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-semibold" data-key="smart_mix_desc">Customize your "Smart Mix"</p>
                 </div>
                 <button onclick="toggleSettings()" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition">✕</button>
             </div>
@@ -185,8 +190,8 @@
                 <!-- Levels Section -->
                 <div>
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Active Levels</h3>
-                        <button onclick="toggleAll('levels', true)" class="text-blue-600 dark:text-blue-400 text-xs font-bold">Select All</button>
+                        <h3 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider" data-key="active_levels">Active Levels</h3>
+                        <button onclick="toggleAll('levels', true)" class="text-blue-600 dark:text-blue-400 text-xs font-bold" data-key="select_all">Select All</button>
                     </div>
                     <div class="grid grid-cols-3 gap-3" id="level-filters">
                         <!-- Injected by JS -->
@@ -196,8 +201,8 @@
                 <!-- Topics Section -->
                 <div>
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Active Topics</h3>
-                        <button onclick="toggleAll('topics', true)" class="text-blue-600 dark:text-blue-400 text-xs font-bold">Select All</button>
+                        <h3 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider" data-key="active_topics">Active Topics</h3>
+                        <button onclick="toggleAll('topics', true)" class="text-blue-600 dark:text-blue-400 text-xs font-bold" data-key="select_all">Select All</button>
                     </div>
                     <div class="space-y-3" id="topic-filters">
                         <!-- Injected by JS -->
@@ -206,7 +211,7 @@
             </div>
 
             <div class="p-5 border-t border-gray-100 dark:border-gray-800 safe-pb bg-white dark:bg-gray-900">
-                <button onclick="applySettings()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition">
+                <button onclick="applySettings()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition" data-key="apply_filters">
                     Apply Filters
                 </button>
             </div>
@@ -253,13 +258,13 @@
                     </div>
                     
                     <button onclick="startLevelShuffle()" class="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white w-full py-3 rounded-xl font-bold active:scale-95 transition flex items-center justify-center gap-2 shadow-sm">
-                        <span class="text-lg">🔀</span> Shuffle <span id="btn-level-text" class="text-white font-extrabold">A1</span>
+                        <span class="text-lg">🔀</span> <span data-key="shuffle">Shuffle</span> <span id="btn-level-text" class="text-white font-extrabold ml-1">A1</span>
                     </button>
                 </div>
             </div>
 
             <div class="flex justify-between items-end mb-3 px-1">
-                <h3 class="font-bold text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider">Browse Topics</h3>
+                <h3 class="font-bold text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider" data-key="browse_topics">Browse Topics</h3>
             </div>
             
             <div id="category-grid" class="grid grid-cols-2 gap-3 pb-8"></div>
@@ -286,7 +291,7 @@
                             <button onclick="speakCurrentQuestion()" id="speak-btn" class="w-12 h-12 rounded-full bg-gray-50 dark:bg-gray-800 text-blue-600 dark:text-blue-400 active:bg-blue-100 dark:active:bg-gray-700 active:scale-95 flex items-center justify-center transition-all duration-200 touch-manipulation shadow-sm border border-gray-100 dark:border-gray-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                             </button>
-                            <span class="text-[10px] uppercase font-bold text-gray-300 dark:text-gray-600 tracking-wider">Listen</span>
+                            <span class="text-[10px] uppercase font-bold text-gray-300 dark:text-gray-600 tracking-wider" data-key="listen">Listen</span>
                         </div>
                     </div>
 
@@ -329,12 +334,114 @@
 
             <div class="flex-none p-4 safe-pb bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] z-30 transition-colors duration-300">
                 <button onclick="prevQuestion()" id="prev-btn" class="flex-1 h-16 bg-gray-100 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-2xl font-bold transition disabled:opacity-30 disabled:active:bg-gray-50 dark:disabled:active:bg-gray-800 touch-manipulation flex flex-col items-center justify-center"><span class="text-2xl leading-none mb-1">←</span></button>
-                <button onclick="nextQuestion()" id="next-btn" class="flex-[3] h-16 bg-blue-600 active:bg-blue-700 active:scale-[0.98] text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-blue-900/30 transition touch-manipulation flex flex-col items-center justify-center relative overflow-hidden"><span class="text-lg tracking-wide" id="next-text">Next Question</span></button>
+                <button onclick="nextQuestion()" id="next-btn" class="flex-[3] h-16 bg-blue-600 active:bg-blue-700 active:scale-[0.98] text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-blue-900/30 transition touch-manipulation flex flex-col items-center justify-center relative overflow-hidden"><span class="text-lg tracking-wide" id="next-text" data-key="next_question">Next Question</span></button>
             </div>
         </div>
     </main>
 
     <script>
+        // --- TRANSLATIONS ---
+        const uiText = {
+            en: {
+                filters: "Filters",
+                exit: "Exit",
+                smart_filters: "Smart Filters",
+                smart_mix_desc: "Customize your \"Smart Mix\"",
+                active_levels: "Active Levels",
+                select_all: "Select All",
+                active_topics: "Active Topics",
+                apply_filters: "Apply Filters",
+                browse_topics: "Browse Topics",
+                shuffle: "Shuffle",
+                listen: "Listen",
+                next_question: "Next Question",
+                start_over: "Start Over",
+                next: "Next",
+                input_placeholder: "Type answer here, then check pronunciation...",
+                input_listening: "Listening...",
+                check_pronunciation: "Check Pronunciation",
+                great_job: "Great Job!",
+                keep_trying: "Keep trying!",
+                you_said: "You said:",
+                hero_a1_title: "Let's Speak!",
+                hero_a1_desc: "Simple questions to get started.",
+                hero_a2_title: "Keep Going!",
+                hero_a2_desc: "Past tense and detailed ideas.",
+                hero_b1_title: "Level Up!",
+                hero_b1_desc: "Deeper questions for longer answers.",
+                hero_b2_title: "Advanced",
+                hero_b2_desc: "Complex topics & conditionals.",
+                hero_c1_title: "Mastery",
+                hero_c1_desc: "Abstract & hypothetical concepts.",
+                hero_c2_title: "Proficiency",
+                hero_c2_desc: "Philosophy, society & meta.",
+                no_levels: "No levels active",
+                no_topics_match: "No topics match your filters.<br>Check settings!",
+                no_questions_level: "No questions found for this level!",
+                no_questions_avail: "No questions available! Please check your filters.",
+                smart_mix: "Smart Mix",
+                topic_personal: "Personal Info",
+                topic_daily: "Daily Life",
+                topic_hobbies: "Free Time",
+                topic_family: "Family",
+                topic_food: "Food & Health",
+                topic_places: "Travel",
+                topic_education: "Education & Work",
+                topic_tech: "Technology",
+                topic_shopping: "Shopping & Style",
+                topic_nature: "Nature & Env."
+            },
+            tr: {
+                filters: "Filtreler",
+                exit: "Çıkış",
+                smart_filters: "Akıllı Filtreler",
+                smart_mix_desc: "\"Akıllı Karışım\"ınızı özelleştirin",
+                active_levels: "Aktif Seviyeler",
+                select_all: "Tümünü Seç",
+                active_topics: "Aktif Konular",
+                apply_filters: "Filtreleri Uygula",
+                browse_topics: "Konulara Göz At",
+                shuffle: "Karıştır",
+                listen: "Dinle",
+                next_question: "Sıradaki Soru",
+                start_over: "Başa Dön",
+                next: "İleri",
+                input_placeholder: "Cevabı yazın, sonra telaffuzu kontrol edin...",
+                input_listening: "Dinleniyor...",
+                check_pronunciation: "Telaffuzu Kontrol Et",
+                great_job: "Harika İş!",
+                keep_trying: "Denemeye devam!",
+                you_said: "Dediğiniz:",
+                hero_a1_title: "Hadi Konuşalım!",
+                hero_a1_desc: "Başlamak için basit sorular.",
+                hero_a2_title: "Devam Et!",
+                hero_a2_desc: "Geçmiş zaman ve detaylı fikirler.",
+                hero_b1_title: "Seviye Atla!",
+                hero_b1_desc: "Uzun cevaplar için derin sorular.",
+                hero_b2_title: "İleri Seviye",
+                hero_b2_desc: "Karmaşık konular ve koşul cümleleri.",
+                hero_c1_title: "Ustalık",
+                hero_c1_desc: "Soyut ve varsayımsal kavramlar.",
+                hero_c2_title: "Yetkinlik",
+                hero_c2_desc: "Felsefe, toplum ve meta.",
+                no_levels: "Aktif seviye yok",
+                no_topics_match: "Filtrelerle eşleşen konu yok.<br>Ayarları kontrol edin!",
+                no_questions_level: "Bu seviye için soru bulunamadı!",
+                no_questions_avail: "Soru mevcut değil! Lütfen filtreleri kontrol edin.",
+                smart_mix: "Akıllı Karışım",
+                topic_personal: "Kişisel Bilgiler",
+                topic_daily: "Günlük Hayat",
+                topic_hobbies: "Boş Zaman",
+                topic_family: "Aile",
+                topic_food: "Yemek & Sağlık",
+                topic_places: "Seyahat",
+                topic_education: "Eğitim & İş",
+                topic_tech: "Teknoloji",
+                topic_shopping: "Alışveriş & Tarz",
+                topic_nature: "Doğa & Çevre"
+            }
+        };
+
         // --- DATA ---
         const levels = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
         const categories = [
@@ -351,7 +458,7 @@
         ];
 
         // --- FILTER STATE ---
-        const STORAGE_KEY = 'speakup_state_v4';
+        const STORAGE_KEY = 'speakup_state_v5';
         let activeFilters = {
             levels: levels.reduce((acc, lvl) => ({...acc, [lvl]: true}), {}),
             topics: categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
@@ -364,6 +471,7 @@
         let isDarkMode = false;
         let savedAnswers = {}; 
         let synth = window.speechSynthesis;
+        let currentLang = 'en';
         
         // Speech Recognition Setup
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -386,6 +494,7 @@
             filterBtn: document.getElementById('filter-btn'),
             themeBtn: document.getElementById('theme-btn'),
             themeIcon: document.getElementById('theme-icon'),
+            langBtn: document.getElementById('lang-btn'),
             grid: document.getElementById('category-grid'),
             headerBranding: document.getElementById('header-branding'),
             progressContainer: document.getElementById('progress-container'),
@@ -416,9 +525,14 @@
             feedbackContent: document.getElementById('feedback-content')
         };
 
+        function getText(key) {
+            return uiText[currentLang][key] || key;
+        }
+
         function init() {
             loadState();
             applyTheme(); 
+            updateInterfaceText();
             renderFilterUI();
             renderLevelToggle();
             updateThemeForLevel(currentLevel);
@@ -443,7 +557,7 @@
                         els.checkBtn.classList.add('recording-active');
                     } else {
                         els.micBtn.classList.add('recording-active');
-                        els.answerInput.placeholder = "Listening...";
+                        els.answerInput.placeholder = getText('input_listening');
                     }
                 };
                 
@@ -451,7 +565,7 @@
                     isRecording = false;
                     els.micBtn.classList.remove('recording-active');
                     els.checkBtn.classList.remove('recording-active');
-                    els.answerInput.placeholder = "Type answer here, then check pronunciation...";
+                    els.answerInput.placeholder = getText('input_placeholder');
                     isCheckingPronunciation = false; // Reset mode
                 };
                 
@@ -484,6 +598,44 @@
         function toggleCheckBtn(show) {
             if(show) els.checkBtn.classList.remove('hidden');
             else els.checkBtn.classList.add('hidden');
+        }
+
+        // --- LANGUAGE LOGIC ---
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'tr' : 'en';
+            saveState();
+            updateInterfaceText();
+            renderMenu(); // Re-render menu to update category titles
+            renderFilterUI(); // Re-render filters
+            updateThemeForLevel(currentLevel); // Re-render hero
+            
+            // If in card view, update navigation text
+            if (!els.cardView.classList.contains('hidden-view')) {
+                const item = currentQueue[currentIndex];
+                if (currentTheme.isRandom) {
+                    els.topicLabel.textContent = getText('smart_mix');
+                } else if (currentTheme.id && currentLang === 'tr') {
+                    // Fallback to generic title for TR in card view
+                    els.topicLabel.textContent = getText('topic_' + currentTheme.id);
+                } else {
+                    els.topicLabel.textContent = currentTheme.title;
+                }
+                
+                if (currentIndex === currentQueue.length - 1) els.nextText.textContent = getText('start_over');
+                else els.nextText.textContent = getText('next');
+                els.answerInput.placeholder = getText('input_placeholder');
+            }
+        }
+
+        function updateInterfaceText() {
+            // Update lang button
+            els.langBtn.textContent = currentLang.toUpperCase();
+            
+            // Update all elements with data-key attribute
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                el.textContent = getText(key);
+            });
         }
 
         // --- PRONUNCIATION LOGIC ---
@@ -534,15 +686,19 @@
             // Show result
             els.feedbackOverlay.classList.remove('hidden');
             
+            const msgGreat = getText('great_job');
+            const msgTry = getText('keep_trying');
+            const msgSaid = getText('you_said');
+
             if (accuracy >= 0.7) {
                 confetti({
                     particleCount: 100,
                     spread: 70,
                     origin: { y: 0.6 }
                 });
-                els.feedbackContent.innerHTML += `<div class="mt-4 text-center font-bold text-green-600 dark:text-green-400">🎉 Great Job! (${Math.round(accuracy * 100)}%)<br><span class="text-xs text-gray-400 font-normal">You said: "${transcript}"</span></div>`;
+                els.feedbackContent.innerHTML += `<div class="mt-4 text-center font-bold text-green-600 dark:text-green-400">🎉 ${msgGreat} (${Math.round(accuracy * 100)}%)<br><span class="text-xs text-gray-400 font-normal">${msgSaid} "${transcript}"</span></div>`;
             } else {
-                els.feedbackContent.innerHTML += `<div class="mt-4 text-center font-bold text-orange-600 dark:text-orange-400">Keep trying! (${Math.round(accuracy * 100)}%)<br><span class="text-xs text-gray-400 font-normal">You said: "${transcript}"</span></div>`;
+                els.feedbackContent.innerHTML += `<div class="mt-4 text-center font-bold text-orange-600 dark:text-orange-400">${msgTry} (${Math.round(accuracy * 100)}%)<br><span class="text-xs text-gray-400 font-normal">${msgSaid} "${transcript}"</span></div>`;
             }
         }
         
@@ -582,6 +738,7 @@
                     filters: activeFilters,
                     level: currentLevel,
                     darkMode: isDarkMode,
+                    lang: currentLang,
                     answers: savedAnswers
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -601,6 +758,7 @@
                     }
                     if (data.level && levels.includes(data.level)) currentLevel = data.level;
                     if (typeof data.darkMode !== 'undefined') isDarkMode = data.darkMode;
+                    if (data.lang) currentLang = data.lang;
                     if (data.answers) savedAnswers = data.answers;
                     else savedAnswers = {};
                     
@@ -657,7 +815,7 @@
                 <div class="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
                     <div class="flex items-center gap-3">
                         <span class="text-xl">${cat.icon}</span>
-                        <span class="font-bold text-gray-700 dark:text-gray-200 text-sm">${cat.title}</span>
+                        <span class="font-bold text-gray-700 dark:text-gray-200 text-sm">${getText('topic_' + cat.id)}</span>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" onchange="updateFilter('topics', '${cat.id}', this.checked)" class="sr-only peer toggle-checkbox" ${activeFilters.topics[cat.id] ? 'checked' : ''}>
@@ -677,6 +835,11 @@
             keys.forEach(k => activeFilters[type][k] = state);
             renderFilterUI();
             saveState();
+            if (type === 'levels') {
+                renderLevelToggle();
+                validateCurrentLevel();
+            }
+            renderMenu();
         }
 
         function applySettings() {
@@ -705,7 +868,7 @@
             const activeLvlKeys = levels.filter(l => activeFilters.levels[l]);
             
             if (activeLvlKeys.length === 0) {
-                 container.innerHTML = '<div class="w-full text-center text-xs text-gray-400 dark:text-gray-500 py-3">No levels active</div>';
+                 container.innerHTML = `<div class="w-full text-center text-xs text-gray-400 dark:text-gray-500 py-3">${getText('no_levels')}</div>`;
                  els.toggleBg.style.opacity = '0';
                  return;
             }
@@ -771,27 +934,27 @@
         // --- THEME & VISUALS ---
         function updateThemeForLevel(level) {
              if (level === 'a1') {
-                updateThemeUI("Let's Speak!", "Simple questions to get started.", "A1", "text-blue-600", 
+                updateThemeUI(getText('hero_a1_title'), getText('hero_a1_desc'), "A1", "text-blue-600", 
                 "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80", 
                 "bg-gradient-to-br from-blue-900/80 to-blue-600/80");
             } else if (level === 'a2') {
-                updateThemeUI("Keep Going!", "Past tense and detailed ideas.", "A2", "text-sky-600",
+                updateThemeUI(getText('hero_a2_title'), getText('hero_a2_desc'), "A2", "text-sky-600",
                 "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
                 "bg-gradient-to-br from-sky-900/80 to-sky-600/80");
             } else if (level === 'b1') {
-                updateThemeUI("Level Up!", "Deeper questions for longer answers.", "B1", "text-purple-600",
+                updateThemeUI(getText('hero_b1_title'), getText('hero_b1_desc'), "B1", "text-purple-600",
                 "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=800&q=80",
                 "bg-gradient-to-br from-purple-900/80 to-purple-600/80");
             } else if (level === 'b2') {
-                updateThemeUI("Advanced", "Complex topics & conditionals.", "B2", "text-emerald-600",
+                updateThemeUI(getText('hero_b2_title'), getText('hero_b2_desc'), "B2", "text-emerald-600",
                 "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
                 "bg-gradient-to-br from-emerald-900/80 to-emerald-600/80");
             } else if (level === 'c1') {
-                updateThemeUI("Mastery", "Abstract & hypothetical concepts.", "C1", "text-rose-600",
+                updateThemeUI(getText('hero_c1_title'), getText('hero_c1_desc'), "C1", "text-rose-600",
                 "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
                 "bg-gradient-to-br from-rose-900/80 to-rose-600/80");
             } else if (level === 'c2') {
-                updateThemeUI("Proficiency", "Philosophy, society & meta.", "C2", "text-slate-900",
+                updateThemeUI(getText('hero_c2_title'), getText('hero_c2_desc'), "C2", "text-slate-900",
                 "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
                 "bg-gradient-to-br from-slate-900/90 to-slate-800/90");
             }
@@ -801,7 +964,7 @@
             els.heroTitle.textContent = title;
             els.heroDesc.textContent = desc;
             els.btnLevelText.textContent = badgeText; 
-            els.btnLevelText.className = "text-white font-extrabold"; 
+            els.btnLevelText.className = "text-white font-extrabold ml-1"; 
             els.levelBadge.textContent = badgeText;
             
             // Image swap with fade
@@ -822,7 +985,14 @@
 
                 const btn = document.createElement('div');
                 const count = cat.questions[currentLevel].length;
-                const displayTitle = (cat.titles && cat.titles[currentLevel]) ? cat.titles[currentLevel] : cat.title;
+                
+                // If in English, use specific titles if available. If TR, use generic translated title.
+                let displayTitle = cat.title;
+                if (currentLang === 'en' && cat.titles && cat.titles[currentLevel]) {
+                    displayTitle = cat.titles[currentLevel];
+                } else {
+                    displayTitle = getText('topic_' + cat.id);
+                }
 
                 btn.className = `bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 active:scale-95 transition cursor-pointer flex flex-col justify-between shadow-sm dark:shadow-black/20 h-24 hover:shadow-md transition-colors duration-200`;
                 btn.onclick = () => startCategory(cat.id);
@@ -837,7 +1007,7 @@
             });
             
             if (els.grid.children.length === 0) {
-                els.grid.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-400 dark:text-gray-500 text-sm">No topics match your filters.<br>Check settings!</div>`;
+                els.grid.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-400 dark:text-gray-500 text-sm">${getText('no_topics_match')}</div>`;
             }
         }
 
@@ -845,7 +1015,14 @@
             const cat = categories.find(c => c.id === id);
             currentQueue = [...cat.questions[currentLevel]];
             currentTheme = { ...cat };
-            if (cat.titles && cat.titles[currentLevel]) currentTheme.title = cat.titles[currentLevel];
+            
+            // Title logic for card view
+            if (currentLang === 'en' && cat.titles && cat.titles[currentLevel]) {
+                currentTheme.title = cat.titles[currentLevel];
+            } else {
+                currentTheme.title = getText('topic_' + cat.id);
+            }
+            
             currentIndex = 0;
             openCardView(false);
         }
@@ -857,7 +1034,7 @@
                  if (cat.questions[currentLevel]) pool = pool.concat(cat.questions[currentLevel]);
              });
 
-             if (pool.length === 0) { alert("No questions found for this level!"); return; }
+             if (pool.length === 0) { alert(getText('no_questions_level')); return; }
 
              currentQueue = pool.sort(() => 0.5 - Math.random());
              
@@ -870,7 +1047,7 @@
              else color = 'bg-slate-800';
 
              currentTheme = { 
-                title: `Shuffle (${currentLevel.toUpperCase()})`, 
+                title: `${getText('shuffle')} (${currentLevel.toUpperCase()})`, 
                 icon: '🎲', 
                 color: color,
                 isRandom: false
@@ -896,14 +1073,14 @@
             });
 
             if (pool.length === 0) {
-                alert("No questions available! Please check your filters.");
+                alert(getText('no_questions_filter'));
                 return;
             }
 
             currentQueue = pool.sort(() => 0.5 - Math.random());
             
             currentTheme = { 
-                title: `Smart Mix`, 
+                title: getText('smart_mix'), 
                 icon: '✨', 
                 color: 'bg-indigo-600',
                 isRandom: true
@@ -921,6 +1098,7 @@
             els.homeBtn.parentElement.classList.remove('hidden');
             els.filterBtn.classList.add('hidden');
             els.themeBtn.classList.add('hidden'); // Hide Theme button in card view
+            els.langBtn.classList.add('hidden'); // Hide Lang button in card view
             els.homeBtn.classList.remove('hidden');
             els.fabBtn.classList.add('hidden'); // Hide FAB in card view
             
@@ -948,6 +1126,7 @@
             els.progressContainer.classList.add('hidden');
             els.filterBtn.classList.remove('hidden');
             els.themeBtn.classList.remove('hidden');
+            els.langBtn.classList.remove('hidden');
             els.filterBtn.parentElement.classList.remove('hidden');
             els.homeBtn.classList.add('hidden');
             els.fabBtn.classList.remove('hidden'); // Show FAB
@@ -974,7 +1153,13 @@
             toggleCheckBtn(saved.length > 0);
             
             if (typeof item === 'object') {
-                 els.randomMeta.textContent = `${item.level.toUpperCase()} • ${item.topic}`;
+                 // Format level and topic meta text
+                 let topicText = item.topic;
+                 // If using Turkish, try to map the catId back to a generic Turkish title if possible
+                 if(currentLang === 'tr' && item.catId) {
+                     topicText = getText('topic_' + item.catId);
+                 }
+                 els.randomMeta.textContent = `${item.level.toUpperCase()} • ${topicText}`;
             }
             
             if (text.length > 130) els.questionText.className = "text-lg font-bold text-gray-800 dark:text-gray-100 leading-snug pop-in px-1 select-text mb-6";
@@ -984,8 +1169,8 @@
             const percent = ((currentIndex + 1) / currentQueue.length) * 100;
             els.progressBar.style.width = `${percent}%`;
             els.prevBtn.disabled = currentIndex === 0;
-            if (currentIndex === currentQueue.length - 1) els.nextText.textContent = "Start Over";
-            else els.nextText.textContent = "Next";
+            if (currentIndex === currentQueue.length - 1) els.nextText.textContent = getText('start_over');
+            else els.nextText.textContent = getText('next_question');
         }
 
         window.nextQuestion = function() {
