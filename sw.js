@@ -1,6 +1,6 @@
 const CACHE_NAME = 'speakup-v1';
 const ASSETS_TO_CACHE = [
-  './Convo.html',
+  './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js',
